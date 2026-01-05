@@ -1,0 +1,9 @@
+asgiref==3.11.0
+channels==4.3.2
+click==8.3.1
+colorama==0.4.6
+Django==6.0
+h11==0.16.0
+sqlparse==0.5.5
+tzdata==2025.3
+uvicorn==0.40.0
