@@ -22,7 +22,7 @@ class Attendance(models.Model):
     check_in_time = models.DateTimeField(null=True,blank=True)
     check_out_time = models.DateTimeField(null=True,blank=True)
 
-    total_break_time = models.DurationField(default=timedelta)
+    total_break_time = models.DurationField(default=timedelta())
     total_work_time  = models.DurationField(null=True,blank=True)
 
     status = models.CharField(max_length=25,choices=STATUS_CHOICES,default=STATUS_INCOMPLETE)
