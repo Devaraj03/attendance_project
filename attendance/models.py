@@ -49,3 +49,6 @@ class Attendance(models.Model):
 
             return self.total_work_time
         return None
+
+
+        asdsadasdsadsaddassad
