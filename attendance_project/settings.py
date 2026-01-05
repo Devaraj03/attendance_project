@@ -37,7 +37,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'attendance',
+    'attendance.apps.AttendanceConfig',
 ]
 
 MIDDLEWARE = [
@@ -71,6 +71,7 @@ TEMPLATES = [
 
 ASGI_APPLICATION = 'attendance_project.asgi.application'
 
+TEMPLATES[0]["DIRS"] = [BASE_DIR / "temaplates"]
 
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
@@ -119,3 +120,12 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / "staticfiles"
+
+
+LOGIN_URL = 'login'
+
+LOGIN_REDIRECT_URL = "/"
+
+LOGOUT_URL = 'logout'
+
+LOGOUT_REDIRECT_URL = "login"

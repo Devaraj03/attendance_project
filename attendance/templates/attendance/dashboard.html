@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Attendance Dashboard</title>
+
+    <style>
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            background-color: #f5f7fa;
+            padding: 30px;
+        }
+
+        h2 {
+            color: #2c3e50;
+        }
+
+        .card {
+            background: #ffffff;
+            padding: 20px;
+            max-width: 500px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+        }
+
+        .timer {
+            font-size: 1.6em;
+            font-weight: bold;
+            color: #27ae60;
+            margin: 10px 0;
+        }
+
+        .break-timer {
+            color: #e67e22;
+        }
+
+        button {
+            padding: 10px 18px;
+            border: none;
+            border-radius: 5px;
+            background: #3498db;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        button:hover {
+            background: #2980b9;
+        }
+
+        button.danger {
+            background: #e74c3c;
+        }
+
+        button.danger:hover {
+            background: #c0392b;
+        }
+
+        .meta {
+            color: #555;
+            font-size: 14px;
+        }
+
+        hr {
+            margin: 20px 0;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="card">
+
+        <div>
+        <form action="{% url 'logout' %}" method="post">
+            {% csrf_token %}
+            <button type="submit">logout</button>
+        </form>
+    </div>
+    <h2>Attendance Dashboard</h2>
+    
+
+    <p class="meta"><strong>Date:</strong> {{ attendance.date }}</p>
+    <!-- <p class="meta"><strong>Status:</strong> {{ attendance.status }}</p> -->
+
+    <hr>
+
+    {% if not attendance.check_in_time %}
+        <form method="post" action="{% url 'attendance:check_in' %}">
+            {% csrf_token %}
+            <button type="submit">Check In</button>
+        </form>
+    {% else %}
+        <p class="meta">Checked in at: {{ attendance.check_in_time }}</p>
+        <p class="meta">Checked out at: {{ attendance.check_out_time }}</p>
+        <p class="timer">
+            Live Work Time:
+            <span id="work-timer">00:00:00</span>
+        </p>
+    {% endif %}
+
+    {% if attendance.check_in_time and not attendance.check_out_time %}
+        <hr>
+
+        {% if active_break %}
+            <p class="meta">Break started at: {{ active_break.start_time }}</p>
+            <p class="timer break-timer">
+                Live Break Time:
+                <span id="break-timer">00:00:00</span>
+            </p>
+
+            <form method="post" action="{% url 'attendance:end_break' %}">
+                {% csrf_token %}
+                <button class="danger" type="submit">End Break</button>
+            </form>
+        {% else %}
+            <form method="post" action="{% url 'attendance:start_break' %}">
+                {% csrf_token %}
+                <button type="submit">Start Break</button>
+            </form>
+        {% endif %}
+    {% endif %}
+
+    {% if attendance.check_out_time %}
+        <hr>
+        <p class="meta">
+            Total Break Time:
+            <strong>
+                <span id="final-break"></span>
+            </strong>
+        </p>
+        <p class="meta">
+            Total Work Time:
+            <strong>
+                <span id="final-work"></span>
+            </strong>
+        </p>
+    {% elif attendance.check_in_time %}
+        <hr>
+        <form method="post" action="{% url 'attendance:check_out' %}">
+            {% csrf_token %}
+            <button class="danger" type="submit">Check Out</button>
+        </form>
+    {% endif %}
+</div>
+
+<script>
+function formatDuration(seconds) {
+    seconds = Math.max(0, Math.floor(seconds));
+    const hrs = String(Math.floor(seconds / 3600)).padStart(2, '0');
+    const mins = String(Math.floor((seconds % 3600) / 60)).padStart(2, '0');
+    const secs = String(seconds % 60).padStart(2, '0');
+    return `${hrs}:${mins}:${secs}`;
+}
+</script>
+
+{% if attendance.check_in_time and not attendance.check_out_time %}
+<script>
+const checkInTime = new Date("{{ attendance.check_in_time|date:'c' }}").getTime();
+const finishedBreakSeconds = {{ attendance.total_break_time.total_seconds|default:0|floatformat:0 }};
+
+setInterval(() => {
+    const now = Date.now();
+    let workSeconds = Math.floor((now - checkInTime) / 1000) - finishedBreakSeconds;
+    document.getElementById("work-timer").innerText = formatDuration(workSeconds);
+}, 1000);
+</script>
+{% endif %}
+
+{% if active_break %}
+<script>
+const breakStartTime = new Date("{{ active_break.start_time|date:'c' }}").getTime();
+
+setInterval(() => {
+    const now = Date.now();
+    let breakSeconds = Math.floor((now - breakStartTime) / 1000);
+    document.getElementById("break-timer").innerText = formatDuration(breakSeconds);
+}, 1000);
+</script>
+{% endif %}
+
+{% if attendance.check_out_time %}
+<script>
+document.getElementById("final-break").innerText =
+    formatDuration({{ attendance.total_break_time.total_seconds|default:0|floatformat:0 }});
+
+document.getElementById("final-work").innerText =
+    formatDuration({{ attendance.total_work_time.total_seconds|default:0|floatformat:0 }});
+</script>
+{% endif %}
+
+</body>
+</html>

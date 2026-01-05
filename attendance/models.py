@@ -40,12 +40,48 @@ class Attendance(models.Model):
     def __str__(self):
         return f"{self.user} - {self.date}"
     
+    def calculate_total_break_time(self):            #-> newly committed
+        total = timedelta()
+        for br in self.breaks.all():
+            if br.duration:
+                total += br.duration
+            
+        self.total_break_time = total
+        return total
+
     def calculate_total_work_time(self):
-        
         if self.check_in_time and self.check_out_time:
+
+            self.calculate_total_break_time()       #-> newly committed
             self.total_work_time =(
                 self.check_out_time - self.check_in_time
             ) - self.total_break_time
 
             return self.total_work_time
         return None
+    
+
+
+class Break(models.Model):
+    attendance = models.ForeignKey("Attendance",on_delete=models.CASCADE,related_name="breaks")
+
+    start_time = models.DateTimeField()
+    end_time = models.DateTimeField(null=True,blank=True)
+
+    duration = models.DurationField(null=True,blank= True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now = True)
+
+    def calculate_duration(self):
+        if self.start_time and self.end_time:
+            self.duration = self.end_time - self.start_time
+            return self.duration
+        return None
+    
+    def save(self,*args,**kwargs):
+        self.calculate_duration()
+        super().save(*args,**kwargs)
+
+    def __str__(self):
+        return f"Break ({self.attendance.user})"
